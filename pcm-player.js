@@ -131,8 +131,8 @@ PCMPlayer.prototype.flush = function() {
         }
     }
     
-    if (this.startTime < this.audioCtx.currentTime + 0.1) {
-        this.startTime = this.audioCtx.currentTime + 0.1;
+    if (this.startTime < this.audioCtx.currentTime) {
+        this.startTime = this.audioCtx.currentTime;
     }
     console.log('start vs current '+this.startTime+' vs '+this.audioCtx.currentTime+' duration: '+audioBuffer.duration);
     bufferSource.buffer = audioBuffer;
