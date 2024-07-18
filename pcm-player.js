@@ -11,8 +11,8 @@ PCMPlayer.prototype.init = function(option) {
     };
     this.option = Object.assign({}, defaults, option);
     this.samples = new Float32Array();
-    this.flush = this.flush.bind(this);
-    this.interval = setInterval(this.flush, this.option.flushingTime);
+    //this.flush = this.flush.bind(this);
+    //this.interval = setInterval(this.flush, this.option.flushingTime);
     this.maxValue = this.getMaxValue();
     this.typedArray = this.getTypedArray();
     this.createContext();
@@ -71,10 +71,12 @@ PCMPlayer.prototype.isTypedArray = function(data) {
 PCMPlayer.prototype.feed = function(data) {
     if (!this.isTypedArray(data)) return;
     data = this.getFormatedValue(data);
-    var tmp = new Float32Array(this.samples.length + data.length);
+    this.samples = data
+    this.flush()
+    /*var tmp = new Float32Array(this.samples.length + data.length);
     tmp.set(this.samples, 0);
     tmp.set(data, this.samples.length);
-    this.samples = tmp;
+    this.samples = tmp;*/
 };
 
 PCMPlayer.prototype.getFormatedValue = function(data) {
@@ -94,9 +96,9 @@ PCMPlayer.prototype.volume = function(left, right) {
 };
 
 PCMPlayer.prototype.destroy = function() {
-    if (this.interval) {
+    /*if (this.interval) {
         clearInterval(this.interval);
-    }
+    }*/
     this.samples = null;
     this.audioCtx.close();
     this.audioCtx = null;
