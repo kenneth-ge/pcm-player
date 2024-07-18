@@ -131,14 +131,16 @@ PCMPlayer.prototype.flush = function() {
         }
     }
     
+    console.log('start vs current '+this.startTime+' vs '+this.audioCtx.currentTime+' duration: '+audioBuffer.duration);
+    
     if (this.startTime < this.audioCtx.currentTime) {
         this.startTime = this.audioCtx.currentTime;
     }
-    console.log('start vs current '+this.startTime+' vs '+this.audioCtx.currentTime+' duration: '+audioBuffer.duration);
+    
     bufferSource.buffer = audioBuffer;
     bufferSource.connect(this.leftGainNode);
     bufferSource.connect(this.rightGainNode);
-    bufferSource.start(this.startTime);
+    bufferSource.start()//this.startTime);
     this.startTime += audioBuffer.duration;
     this.samples = new Float32Array();
 };
