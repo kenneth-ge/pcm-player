@@ -68,11 +68,11 @@ PCMPlayer.prototype.isTypedArray = function(data) {
     return (data.byteLength && data.buffer && data.buffer.constructor == ArrayBuffer);
 };
 
-PCMPlayer.prototype.feed = function(data) {
+PCMPlayer.prototype.feed = function(data, pitchShift=0) {
     if (!this.isTypedArray(data)) return;
     data = this.getFormatedValue(data);
     this.samples = data
-    this.flush()
+    this.flush(pitchShift)
     /*var tmp = new Float32Array(this.samples.length + data.length);
     tmp.set(this.samples, 0);
     tmp.set(data, this.samples.length);
@@ -104,7 +104,7 @@ PCMPlayer.prototype.destroy = function() {
     this.audioCtx = null;
 };
 
-PCMPlayer.prototype.flush = function() {
+PCMPlayer.prototype.flush = function(pitchShift) {
     if (!this.samples.length) return;
     var bufferSource = this.audioCtx.createBufferSource(),
         length = this.samples.length / this.option.channels,
@@ -133,16 +133,29 @@ PCMPlayer.prototype.flush = function() {
         }
     }
     
-    console.log('start vs current '+this.startTime+' vs '+this.audioCtx.currentTime+' duration: '+audioBuffer.duration);
-    
     if (this.startTime < this.audioCtx.currentTime) {
         this.startTime = this.audioCtx.currentTime;
     }
     
     bufferSource.buffer = audioBuffer;
-    bufferSource.connect(this.leftGainNode);
-    bufferSource.connect(this.rightGainNode);
+
+    //this.shifter = new PitchShifter(this.audioCtx, audioBuffer, length);
+    //this.shifter.tempo = 0.5;
+    //this.shifter.pitch = 0.5;// pitch
+    //this.shifter.connect(this.audioCtx.destination)
+    //this.shifter.connect(this.leftGainNode);
+    //this.shifter.connect(this.rightGainNode);
+    
+    Tone.setContext(this.audioCtx)
+    pitchShift = new Tone.PitchShift(pitchShift)
+    Tone.connect(bufferSource, pitchShift)
+
+    pitchShift.connect(this.leftGainNode);
+    pitchShift.connect(this.rightGainNode);
+
+    //bufferSource.connect(this.leftGainNode);
+    //bufferSource.connect(this.rightGainNode);
     bufferSource.start()//this.startTime);
-    this.startTime += audioBuffer.duration;
+    //this.startTime += audioBuffer.duration;
     this.samples = new Float32Array();
 };
