@@ -40,8 +40,27 @@ PCMPlayer.prototype.getTypedArray = function () {
     return typedArrays[this.option.encoding] ? typedArrays[this.option.encoding] : typedArrays['16bitInt'];
 };
 
-PCMPlayer.prototype.createContext = function() {
+function until(conditionFunction) {
+    const poll = resolve => {
+        if(conditionFunction()) resolve();
+        else setTimeout(_ => poll(resolve), 400);
+    }
+
+    return new Promise(poll);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+PCMPlayer.prototype.createContext = async function() {
+    //let x = await import('https://cdn.jsdelivr.net/npm/standardized-audio-context@25.3.75/+esm')
+    //await sleep(2000)
+    //await Tone.loaded()
+    //this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    //this.audioCtx = new x.AudioContext()//new Tone.Context(new (window.AudioContext || window.webkitAudioContext)())
     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    //console.log('do stuff now')
 
     // context needs to be resumed on iOS and Safari (or it will stay in "suspended" state)
     this.audioCtx.resume();
@@ -53,12 +72,34 @@ PCMPlayer.prototype.createContext = function() {
     this.leftGainNode.gain.value = 1;
     this.rightGainNode.gain.value = 1;
 
+    /*await until(() => {
+        try{
+            this.audioCtx.createChannelMerger
+            return true
+        }catch(err){
+            return false
+        }
+    })*/
+
     // create stereo merger
     this.merger = this.audioCtx.createChannelMerger(2)
 
     // connect gain nodes to merger
     this.leftGainNode.connect(this.merger, 0, 0)
     this.rightGainNode.connect(this.merger, 0, 1)
+
+    /*await until(() => {
+        try{
+            //console.log('try:', this.audioCtx, this.audioCtx.destination)
+            //this.audioCtx.destination
+            this.merger.connect(this.audioCtx.destination)
+            return true
+        }catch(err){
+            return false
+        }
+    })*/
+
+    //console.log('does work:', this.merger, this.audioCtx, this.audioCtx.destination)
 
     this.merger.connect(this.audioCtx.destination);
     this.startTime = this.audioCtx.currentTime;
@@ -136,7 +177,7 @@ PCMPlayer.prototype.flush = function(pitchShift) {
     if (this.startTime < this.audioCtx.currentTime) {
         this.startTime = this.audioCtx.currentTime;
     }
-    
+
     bufferSource.buffer = audioBuffer;
 
     //this.shifter = new PitchShifter(this.audioCtx, audioBuffer, length);
@@ -146,16 +187,21 @@ PCMPlayer.prototype.flush = function(pitchShift) {
     //this.shifter.connect(this.leftGainNode);
     //this.shifter.connect(this.rightGainNode);
     
-    Tone.setContext(this.audioCtx)
-    pitchShift = new Tone.PitchShift(pitchShift)
-    Tone.connect(bufferSource, pitchShift)
+    let enablePitchShift = true
+    if(enablePitchShift){
+        Tone.setContext(this.audioCtx)
+        pitchShift = new Tone.PitchShift(pitchShift)
+        Tone.connect(bufferSource, pitchShift)
 
-    pitchShift.connect(this.leftGainNode);
-    pitchShift.connect(this.rightGainNode);
-
-    //bufferSource.connect(this.leftGainNode);
-    //bufferSource.connect(this.rightGainNode);
+        pitchShift.connect(this.leftGainNode);
+        pitchShift.connect(this.rightGainNode);
+    }else{
+        bufferSource.connect(this.leftGainNode);
+        bufferSource.connect(this.rightGainNode);
+    }
     bufferSource.start()//this.startTime);
     //this.startTime += audioBuffer.duration;
     this.samples = new Float32Array();
 };
+
+console.log("execute PCM player script here AAAAAAAAAAAA")
